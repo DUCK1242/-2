@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Наш маленький план 💗</title>
+<style>
+  :root { --pink:#ff6f91; --deep:#8d3654; --cream:#fff8f6; --ink:#392b31; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; padding:28px 16px;
+    display:flex; align-items:center; justify-content:center;
+    font-family: ui-rounded, "Segoe UI", system-ui, sans-serif;
+    color:var(--ink);
+    background: radial-gradient(circle at 15% 15%, #ffe1e8 0, transparent 35%),
+                radial-gradient(circle at 90% 85%, #ffd8df 0, transparent 32%),
+                linear-gradient(135deg,#fff7f2,#ffeef2);
+  }
+  .card {
+    width:min(100%,620px); background:rgba(255,255,255,.9);
+    border:1px solid #ffffff; border-radius:28px; padding:clamp(24px,5vw,42px);
+    box-shadow:0 22px 70px rgba(141,54,84,.13);
+  }
+  .heart { font-size:30px; text-align:center; margin-bottom:8px; }
+  h1 { text-align:center; margin:0; color:var(--deep); font-size:clamp(27px,5vw,38px); }
+  .intro { text-align:center; color:#886b76; margin:10px 0 28px; line-height:1.5; }
+  .question { margin:19px 0; }
+  label { display:block; font-weight:700; margin-bottom:9px; color:#603c4b; }
+  input, select, textarea {
+    width:100%; border:1.5px solid #f1d5de; background:#fffafb;
+    border-radius:14px; padding:14px 15px; color:var(--ink);
+    font:inherit; outline:none; transition:.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--pink); box-shadow:0 0 0 4px #ff6f911c; }
+  textarea { resize:vertical; min-height:54px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  button {
+    width:100%; border:0; border-radius:16px; padding:16px;
+    margin-top:12px; background:linear-gradient(135deg,#ff7798,#ed5680);
+    color:white; font:700 16px inherit; font-size:16px; font-weight:700;
+    cursor:pointer; box-shadow:0 9px 22px #ed568044; transition:transform .2s,filter .2s;
+  }
+  button:hover { transform:translateY(-2px); filter:brightness(1.03); }
+  .result { display:none; margin-top:22px; padding:18px; border-radius:16px; background:#fff0f4; line-height:1.65; }
+  .result h2 { margin:0 0 10px; color:var(--deep); font-size:20px; }
+  .result p { margin:6px 0; overflow-wrap:anywhere; }
+  .hint { font-size:12px; color:#9b818b; text-align:center; margin:14px 0 0; }
+  @media(max-width:460px) { .row { grid-template-columns:1fr; gap:0; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="heart">💗</div>
+  <h1>Плануємо нашу зустріч?</h1>
+  <p class="intro">Кілька маленьких запитань, щоб придумати класний час разом ✨</p>
+
+  <form id="planForm">
+    <div class="question">
+      <label for="when">1. Коли зустрінемося?</label>
+      <div class="row">
+        <input id="when" type="date" aria-label="Дата зустрічі">
+        <input id="time" type="time" aria-label="Час зустрічі">
+      </div>
+    </div>
+
+    <div class="question">
+      <label for="where">2. Де проведемо час?</label>
+      <select id="where">
+        <option value="">Обери варіант 💫</option>
+        <option>У затишному кафе ☕</option>
+        <option>У парку / на прогулянці 🌳</option>
+        <option>У кіно 🎬</option>
+        <option>Десь за містом 🌅</option>
+        <option>Вдома, за фільмом 🍿</option>
+        <option>Є своя ідея</option>
+      </select>
+    </div>
+
+    <div class="question">
+      <label for="activity">3. Чим займемося?</label>
+      <select id="activity">
+        <option value="">Обери, що до душі 💕</option>
+        <option>Гуляти й багато розмовляти</option>
+        <option>Сходити на смачненьке 🍰</option>
+        <option>Подивитися фільм 🎥</option>
+        <option>Пограти / розважитися 🎳</option>
+        <option>Просто побути разом ❤️</option>
+        <option>Вирішимо на місці</option>
+      </select>
+    </div>
+
+    <div class="question">
+      <label for="meeting">4. Точка збору</label>
+      <input id="meeting" type="text" placeholder="Напиши місце зустрічі вручну...">
+    </div>
+
+    <div class="question">
+      <label for="extra">5. Можливо, маєш ще побажання?</label>
+      <textarea id="extra" placeholder="Напиши тут свою ідею (необов'язково)"></textarea>
+    </div>
+
+    <button type="submit">Зберегти наш план 💌</button>
+  </form>
+
+  <section class="result" id="result" aria-live="polite">
+    <h2>Наш план зустрічі 💗</h2>
+    <div id="summary"></div>
+    <button type="button" id="copyBtn">Скопіювати план</button>
+  </section>
+  <p class="hint">Заповніть разом — або нехай це буде маленький сюрприз 😉</p>
+</main>
+<script>
+const form = document.getElementById('planForm');
+const result = document.getElementById('result');
+const summary = document.getElementById('summary');
+const val = id => document.getElementById(id).value.trim();
+let planText = '';
+
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const date = val('when');
+  const time = val('time');
+  const dateText = date ? new Date(date + 'T12:00:00').toLocaleDateString('uk-UA', {day:'numeric', month:'long', year:'numeric'}) : '';
+  const when = [dateText, time].filter(Boolean).join(' о ');
+  const rows = [
+    ['Коли', when],
+    ['Де проведемо час', val('where')],
+    ['Чим займемося', val('activity')],
+    ['Точка збору', val('meeting')],
+    ['Побажання', val('extra')]
+  ].filter(([,value]) => value);
+  planText = 'Наш план зустрічі 💗\n' + (rows.length ? rows.map(([k,v]) => `${k}: ${v}`).join('\n') : 'План поки відкритий — вирішимо разом!');
+  summary.innerHTML = rows.length
+    ? rows.map(([k,v]) => `<p><strong>${k}:</strong> ${escapeHtml(v)}</p>`).join('')
+    : '<p>План поки відкритий — вирішимо разом!</p>';
+  result.style.display = 'block';
+  result.scrollIntoView({behavior:'smooth', block:'nearest'});
+});
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('copyBtn');
+  try {
+    await navigator.clipboard.writeText(planText);
+    btn.textContent = 'Скопійовано 💗';
+    setTimeout(() => btn.textContent = 'Скопіювати план', 1800);
+  } catch {
+    btn.textContent = 'Не вдалося скопіювати';
+  }
+});
+</script>
+</body>
+</html>
